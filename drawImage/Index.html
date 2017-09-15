@@ -1,0 +1,229 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Draw Image</title>
+
+    <script language="javascript" type="text/javascript" src="../drawImage/openseadragon-bin-2.1.0/openseadragon.js"></script>
+
+    <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="fabric/fabric.adapted.js"></script>
+    <script language="javascript" type="text/javascript" src="../drawImage/jquery/jquery-1.9.1.js"></script>
+    <script language="javascript" type="text/javascript" src="../drawImage/jquery/jquery-ui-1.10.2.custom.js"></script>
+    <link href="../drawImage/jquery/jquery-ui-1.10.2.custom.css" rel="stylesheet" type="text/css" />
+    <!--POPUP IMAGE-->
+    <script type="text/javascript" language="javascript" src="../drawImage/jquery/jquery.bpopup_v11.js"></script>
+    <!--Download IMAGE-->
+    <script src="https://rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
+    <script src="https://rawgit.com/eligrey/canvas-toBlob.js/master/canvas-toBlob.js"></script>
+    <script src="fabric/openseadragon-fabricjs-overlay.js"></script>
+    <script src="overlay.js"></script>
+    <script src="rangeslider.min.js"></script>
+    <script language="javascript" type="text/javascript">
+        function showImage() {
+            $("#viewer_popup").css({ "display": "block", "width": "92%" });
+            $("#viewer_popup").find("#image_viewer,.imageViewer_container").css("display", "none");
+            $("#viewer_popup").find("#openseadragon1").css({ "display": "block", "width": "100%", "height": "92%" });
+            dzi_viewer = OpenSeadragon({
+                id: "openseadragon1",
+                prefixUrl: "openseadragon-bin-2.1.0/images/",
+                tileSources: "secure_dzi/bdd7182e4fdfc9a86c98094c54921e70.dzi",
+                showNavigator: true,
+                navigatorPosition: "BOTTOM_LEFT",
+                showRotationControl: true,
+
+                // Enable touch rotation on tactile devices
+                gestureSettingsTouch: {
+                    pinchRotate: true
+                },
+            });
+            $('.openseadragon-canvas canvas').attr('id', 'canvasarea');
+
+            $('#viewer_popup').bPopup({
+                onClose: function () {
+                    dzi_viewer.destroy();
+                }
+            });
+            var options = {
+                scale: 1000
+            }
+            var overlay = dzi_viewer.fabricjsOverlay(options);
+            $('input[type="range"]').rangeslider();
+            $('#myForm input').on('change', function () {
+                var color = $('input[name=radioName]:checked', '#myForm').val();
+                overlay.fabricCanvas().freeDrawingBrush.color = color;
+            });
+         
+            dzi_viewer.addHandler('rotate', function (evt) {
+                //   Here comes rotation degrees
+                console.log(evt);
+            })
+            //$('.pan').css('display', 'none');
+            $('#myForm').css('display', 'none');
+            $('.erase').css('display', 'none');
+            $('.draw').on('click', function () {
+                //$('.pan').css('display', 'block');
+                $('.draw').css('display', 'none');
+                $('.erase').css('display', 'none');
+                $('#myForm').css('display', 'block');
+                var color = $('input[name=radioName]:checked', '#myForm').val();
+                overlay.fabricCanvas().freeDrawingBrush.color = color;
+                var linewidth = $("#slider-range-min").slider("value")
+                overlay.fabricCanvas().freeDrawingBrush.width = linewidth;
+                dzi_viewer.setMouseNavEnabled(false);
+                dzi_viewer.outerTracker.setTracking(false);
+                overlay.fabricCanvas().isDrawingMode = true;
+            })
+
+            $('.pan').on('click', function () {
+                //$('.pan').css('display', 'none');
+                $('.draw').css('display', 'block');
+                $('#myForm').css('display', 'none');
+                $('.erase').css('display', 'block');
+                dzi_viewer.setMouseNavEnabled(true);
+                dzi_viewer.outerTracker.setTracking(true);
+                overlay.fabricCanvas().isDrawingMode = false;
+            })
+
+            $(window).resize(function () {
+                overlay.resize();
+                overlay.resizecanvas();
+            });
+            $('#ex1').slider({
+                formatter: function (value) {
+                    return 'Current value: ' + value;
+                }
+            });
+            $("#slider-range-min").slider({
+                range: "min",
+                value: 10,
+                min: 10,
+                max: 100,
+                slide: function (event, ui) {
+                    $("#amount").val(ui.value);
+                    overlay.fabricCanvas().freeDrawingBrush.width = ui.value;
+                }
+            });
+            $("#amount").val($("#slider-range-min").slider("value"));
+            $('.erase').on('click', function () {
+                var json = overlay.fabricCanvas().toJSON();
+                overlay.fabricCanvas().clear();
+            })
+
+        }
+        var myVar;
+
+        function downloadCanvas() {
+            var bottleCanvas = document.getElementById('canvasarea');
+            var designCanvas = document.getElementById('osd-overlaycanvas-1');
+            var bottleContext = bottleCanvas.getContext('2d');
+            bottleContext.drawImage(designCanvas, 0, 0);
+            var dataURL = bottleCanvas.toDataURL("image/png");
+            var link = document.createElement('a');
+            link.download = "bottle-design.png";
+            link.href = bottleCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            link.click();
+        }
+
+
+
+
+
+    </script>
+    <style>
+        /*===============================	BPOPUP DRAWING IMAGE ===============================
+        /* L.SH 09/02/2016 ===================================================================*/
+        .popUpBox {
+            position: absolute;
+            top: 0px;
+            display: none;
+            background-color: #FFFFFF;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            -ms-border-radius: 4px;
+            -o-border-radius: 4px;
+            border-radius: 4px;
+            margin-top: 1%;
+            height: 95%;
+            max-height: 720px;
+        }
+
+        .image_viewer {
+            max-height: 660px;
+            max-width: 100%;
+            left: 0;
+            right: 0;
+            margin: auto;
+            vertical-align: middle; /* vertical alignment of the inline element */
+        }
+
+        .imageViewer_container {
+            height: 90%;
+            text-align: center; /* align the inline(-block) elements horizontally */
+        }
+
+            .imageViewer_container:before {
+                content: ' ';
+                display: inline-block;
+                vertical-align: middle; /* vertical alignment of the inline element */
+                height: 90%;
+            }
+
+        .fullpage #drawing {
+            margin-top: 62px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .buttonsContainer {
+            display: inline-flex;
+        }
+
+
+        #ex1Slider .slider-selection {
+            background: #BABABA;
+        }
+
+
+        input.radio {
+            vertical-align: text-top;
+            width: 13px;
+            height: 13px;
+            padding: 0;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <input type="button" id="btn_drawImage" onclick="showImage()" value="Show Image" />
+    <div id='viewer_popup' class="popUpBox">
+        <div class="buttonsContainer">
+            <img id="img_xClose" src="../drawImage/window_X_close.png" width="25" height="25" style="cursor:pointer;" />
+            <span onclick="downloadCanvas();"><img src="openseadragon-bin-2.1.0/images/downloadsymbol.png" height="30" /></span>
+            <span class="draw"><img src="openseadragon-bin-2.1.0/images/EditSymbol.png" height="30" /></span>
+            <span id="myForm" style="display: inline-flex;">
+                <span class="pan"><img src="openseadragon-bin-2.1.0/images/TouchSymbol.png" height="30" /></span>
+                <form style="display: inline-flex;">
+                    <div class="radiobuttons" style="display: inline-flex;margin:5px">
+                        <input type="radio" name="radioName" value="Black" checked=checked checked=checked />Black <br />
+                        <input type="radio" name="radioName" value="red" /> Red <br />
+                        <input type="radio" name="radioName" value="green" /> Green <br />
+                    </div>
+                    <div class="scrollbar" style="width: 158px;margin:5px">
+                        <div id="slider-range-min"></div><output type="text" id="amount"></output>
+                    </div>
+                </form>
+            </span>
+            <span>
+                <button class="erase">Erase</button>
+            </span>
+        </div>
+        <div class="imageViewer_container" style="padding-top:10px;"><img id="image_viewer" class="image_viewer" /></div>
+        <div id="openseadragon1" style="width: 800px; height: 600px; display:none; position:relative;z-index:99 !important">
+        </div>
+    </div>
+</body>
+</html>

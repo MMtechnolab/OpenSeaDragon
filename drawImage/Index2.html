@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Draw Image</title>
+
+    <script language="javascript" type="text/javascript" src="../drawImage/jquery/jquery-1.9.1.js"></script>
+    <script language="javascript" type="text/javascript" src="../drawImage/jquery/jquery-ui-1.10.2.custom.js"></script>
+    <link href="../drawImage/jquery/jquery-ui-1.10.2.custom.css" rel="stylesheet" type="text/css" />
+
+    <script language="javascript" type="text/javascript" src="../drawImage/openseadragon-bin-2.1.0/openseadragon.js"></script>
+    <!--POPUP IMAGE-->
+    <script type="text/javascript" language="javascript" src="../drawImage/jquery/jquery.bpopup_v11.js"></script>
+    <script src="https://rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
+    <script src="https://rawgit.com/eligrey/canvas-toBlob.js/master/canvas-toBlob.js"></script>
+
+    <script language="javascript" type="text/javascript">
+        function showImage() {
+            $("#viewer_popup").css({ "display": "block", "width": "92%" });
+            $("#viewer_popup").find("#image_viewer,.imageViewer_container").css("display", "none");
+            $("#viewer_popup").find("#openseadragon1").css({ "display": "block", "width": "100%", "height": "92%" });
+            dzi_viewer = OpenSeadragon({
+                id: "openseadragon1",
+                prefixUrl: "openseadragon-bin-2.1.0/images/",
+                tileSources: "secure_dzi/bdd7182e4fdfc9a86c98094c54921e70.dzi",
+                showNavigator: true,
+                navigatorPosition: "BOTTOM_LEFT",
+                showRotationControl: true,
+                panHorizontal: false,
+                panVertical: false,
+                minZoomLevel: 1,
+                maxZoomLevel: 1,
+                visibilityRatio: 1,
+
+
+
+                // Enable touch rotation on tactile devices
+                gestureSettingsTouch: {
+                    pinchRotate: true
+                },
+                gestureSettingsMouse: {
+
+                }
+            });
+            $('#viewer_popup').bPopup({
+                onClose: function () {
+                    dzi_viewer.destroy();
+                }
+            });
+            myFunction();
+        }
+        var myVar;
+
+        function myFunction() {
+            $('.openseadragon-canvas canvas').attr('id', 'canvasarea');
+            //Canvas
+            myVar = setTimeout(draw, 1000);
+        }
+
+
+
+        function downloadCanvas() {
+            var bottleCanvas = document.getElementById('canvasarea');
+            var designCanvas = document.getElementById('drawing');
+            var bottleContext = bottleCanvas.getContext('2d');
+            bottleContext.drawImage(designCanvas, 0, 10);
+            var dataURL = bottleCanvas.toDataURL("image/png");
+            var link = document.createElement('a');
+            link.download = "bottle-design.png";
+            link.href = bottleCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            link.click();
+        }
+
+        function draw() {
+            var canvas = document.getElementById('drawing');
+            var ctx = canvas.getContext('2d');
+            //Variables
+            var canvasx = $(canvas).offset().left;
+            var canvasy = $(canvas).offset().top;
+            var last_mousex = last_mousey = 0;
+            var mousex = mousey = 0;
+            var mousedown = false;
+            var tooltype = 'draw';
+
+            //Mousedown
+            $(canvas).on('mousedown', function (e) {
+                last_mousex = mousex = parseInt(e.clientX - canvasx);
+                last_mousey = mousey = parseInt(e.clientY - canvasy);
+                mousedown = true;
+            });
+
+            //Mouseup
+            $(canvas).on('mouseup', function (e) {
+                mousedown = false;
+            });
+
+            //Mousemove
+            $(canvas).on('mousemove', function (e) {
+                mousex = parseInt(e.clientX - canvasx);
+                mousey = parseInt(e.clientY - canvasy);
+                if (mousedown) {
+                    ctx.beginPath();
+                    console.log("draw")
+                    if (tooltype == 'draw') {
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.strokeStyle = 'red';
+                        ctx.lineWidth = 5;
+                    } else {
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.lineWidth = 10;
+                    }
+                    ctx.moveTo(last_mousex, last_mousey);
+                    ctx.lineTo(mousex, mousey);
+                    ctx.lineJoin = ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+                last_mousex = mousex;
+                last_mousey = mousey;
+                //Output
+                $('#output').html('current: ' + mousex + ', ' + mousey + '<br/>last: ' + last_mousex + ', ' + last_mousey + '<br/>mousedown: ' + mousedown);
+            });
+
+            //Use draw|erase
+            use_tool = function (tool) {
+                tooltype = tool; //update
+            }
+        }
+    </script>
+    <style>
+        /*===============================	BPOPUP DRAWING IMAGE ===============================
+        /* L.SH 09/02/2016 ===================================================================*/
+        .popUpBox {
+            position: absolute;
+            top: 0px;
+            display: none;
+            background-color: #FFFFFF;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            -ms-border-radius: 4px;
+            -o-border-radius: 4px;
+            border-radius: 4px;
+            margin-top: 1%;
+            height: 95%;
+            max-height: 720px;
+        }
+
+        .image_viewer {
+            max-height: 660px;
+            max-width: 100%;
+            left: 0;
+            right: 0;
+            margin: auto;
+            vertical-align: middle; /* vertical alignment of the inline element */
+        }
+
+        .imageViewer_container {
+            height: 90%;
+            text-align: center; /* align the inline(-block) elements horizontally */
+        }
+
+            .imageViewer_container:before {
+                content: ' ';
+                display: inline-block;
+                vertical-align: middle; /* vertical alignment of the inline element */
+                height: 90%;
+            }
+
+
+
+        .fullpage #drawing {
+            margin-top: 62px;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <input type="button" id="btn_drawImage" onclick="showImage()" value="Show Image" />
+    <div id='viewer_popup' class="popUpBox">
+        <input type="button" value="draw" onclick="use_tool('draw');" />
+        <input type="button" value="erase" onclick="use_tool('erase');" />
+        <input type="button" value="Merge" onclick="downloadCanvas();" />
+        <div><img id="img_xClose" src="../drawImage/window_X_close.png" width="25" height="25" style="cursor:pointer;" /></div>
+        <div class="imageViewer_container" style="padding-top:10px;"><img id="image_viewer" class="image_viewer" /></div>
+        <div id="openseadragon1" style="width: 800px; height: 600px; display:none; position:relative;z-index:99 !important">
+            <canvas id="drawing" width="1200" height="550" style="Color:black;font-size:60px;position: fixed;z-index: 999;margin-top: 20px;"></canvas>
+        </div>
+    </div>
+    <div id="output"></div>
+</body>
+</html>
